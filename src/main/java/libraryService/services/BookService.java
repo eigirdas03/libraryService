@@ -9,20 +9,18 @@ import org.springframework.stereotype.Service;
 
 import libraryService.exceptions.LibraryServiceException;
 import libraryService.models.Book;
-import libraryService.models.BookLibraryMapper;
-import libraryService.repositories.BookLibraryMapperRepository;
 import libraryService.repositories.BookRepository;
 
 @Service
 public class BookService
 {
 	BookRepository bookRepository;
-	BookLibraryMapperRepository bookLibraryMapperRepository;
+	BookLibraryMapperService bookLibraryMapperService;
 	
-	public BookService(BookRepository bookRepository, BookLibraryMapperRepository bookLibraryMapperRepository) throws LibraryServiceException
+	public BookService(BookRepository bookRepository, BookLibraryMapperService bookLibraryMapperService) throws LibraryServiceException
 	{
 		this.bookRepository = bookRepository;
-		this.bookLibraryMapperRepository = bookLibraryMapperRepository;
+		this.bookLibraryMapperService = bookLibraryMapperService;
 		
         bookRepository.save(new Book("name1 surname1", "title1", 2000));
         bookRepository.save(new Book("name2 surname2", "title2", 2001));
@@ -39,7 +37,18 @@ public class BookService
 	
 	public void checkIfBookExists(long id) throws LibraryServiceException
 	{
-		checkIfBookExists(bookRepository.findById(id));
+		if(bookRepository.findById(id).isPresent() == false)
+		{
+			throw new LibraryServiceException("Book with id " + id + " does not exist", HttpStatus.NOT_FOUND);
+		}
+	}
+	
+	public void checkIfBooksExist(List<Long> books) throws LibraryServiceException
+	{
+		for(int i = 0; i < books.size(); ++i)
+		{
+			checkIfBookExists(books.get(i));
+		}
 	}
 	
 	public void checkIfBookDoesNotExist(long id) throws LibraryServiceException
@@ -61,7 +70,7 @@ public class BookService
 		
 		return books;
 	}
-
+	
 	public Book getBookById(long id) throws LibraryServiceException
 	{
 		Optional<Book> book = bookRepository.findById(id);
@@ -101,16 +110,6 @@ public class BookService
 		
 		bookRepository.deleteById(id);
 		
-		List<BookLibraryMapper> allMapperData = bookLibraryMapperRepository.findAll();
-		
-		for(int i = 0; i < allMapperData.size(); ++i)
-		{
-			BookLibraryMapper mapperData = allMapperData.get(i);
-			
-			if(mapperData.getBook() == id)
-			{
-				bookLibraryMapperRepository.delete(mapperData);
-			}
-		}
+		bookLibraryMapperService.deleteByBookFromRepository(id);	
 	}
 }
