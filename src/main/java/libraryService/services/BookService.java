@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import libraryService.exceptions.LibraryServiceException;
 import libraryService.models.Book;
+import libraryService.models.BookPlantMapper;
 import libraryService.repositories.BookRepository;
 
 @Service
@@ -16,11 +17,15 @@ public class BookService
 {
 	BookRepository bookRepository;
 	BookLibraryMapperService bookLibraryMapperService;
+	BookPlantMapperService bookPlantMapperService;
 	
-	public BookService(BookRepository bookRepository, BookLibraryMapperService bookLibraryMapperService) throws LibraryServiceException
+	public BookService(BookRepository bookRepository, BookLibraryMapperService bookLibraryMapperService, 
+			BookPlantMapperService bookPlantMapperService) throws LibraryServiceException
 	{
 		this.bookRepository = bookRepository;
 		this.bookLibraryMapperService = bookLibraryMapperService;
+		
+		this.bookPlantMapperService = bookPlantMapperService;
 		
         bookRepository.save(new Book("name1 surname1", "title1", 2000));
         bookRepository.save(new Book("name2 surname2", "title2", 2001));
@@ -39,7 +44,7 @@ public class BookService
 	{
 		if(bookRepository.findById(id).isPresent() == false)
 		{
-			throw new LibraryServiceException("Book with id " + id + " does not exist", HttpStatus.NOT_FOUND);
+			throw new LibraryServiceException("Book does not exist", HttpStatus.NOT_FOUND);
 		}
 	}
 	
@@ -47,7 +52,10 @@ public class BookService
 	{
 		for(int i = 0; i < books.size(); ++i)
 		{
-			checkIfBookExists(books.get(i));
+			if(bookRepository.findById(books.get(i)).isPresent() == false)
+			{
+				throw new LibraryServiceException("Book with id " + books.get(i) + " does not exist", HttpStatus.NOT_FOUND);
+			};
 		}
 	}
 	
@@ -68,14 +76,22 @@ public class BookService
 			throw new LibraryServiceException("No books exist", HttpStatus.NOT_FOUND);
 		}
 		
+		for(int i = 0; i < books.size(); ++i)
+		{
+			Book book = books.get(i);
+			book.setPlants(bookPlantMapperService.getPlantsLinkedToBook(book.getId()));
+		}
+		
 		return books;
 	}
-	
+
 	public Book getBookById(long id) throws LibraryServiceException
 	{
 		Optional<Book> book = bookRepository.findById(id);
 		
 		checkIfBookExists(book);
+		
+		book.get().setPlants(bookPlantMapperService.getPlantsLinkedToBook(id));
 		
 		return book.get();
 	}
@@ -110,6 +126,18 @@ public class BookService
 		
 		bookRepository.deleteById(id);
 		
-		bookLibraryMapperService.deleteByBookFromRepository(id);	
+		bookLibraryMapperService.deleteByBookFromRepository(id);
+		
+		List<BookPlantMapper> bookPlantMapperData = bookPlantMapperService.findAllFromRepository();
+		
+		for(int i = 0; i < bookPlantMapperData.size(); ++i)
+		{
+			BookPlantMapper mapperData = bookPlantMapperData.get(i);
+			
+			if(mapperData.getBook() == id)
+			{
+				bookPlantMapperService.deleteFromRepository(mapperData);
+			}
+		}
 	}
 }
