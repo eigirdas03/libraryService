@@ -15,7 +15,7 @@ Simple library web service that implements CRUD operations
 * name
 * address
 * opened (year)
-* books[] (book resource array, but in POST/PUT body books ID's are written here)
+* books[] (book resource array, but in POST/PUT body books IDs are written here, book object is automatically added to array by specified ID)
 
 ### Book
 
@@ -68,7 +68,7 @@ Simple library web service that implements CRUD operations
 }
 ```
 
-## PUT (update library "books" array) body structure (in request body cannot be empty)
+## PUT (update library "books" array) body structure (array in request body cannot be empty)
 ```json
 {
     "books": [1, 3]
