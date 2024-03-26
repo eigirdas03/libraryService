@@ -15,7 +15,7 @@ Simple library web service that implements CRUD operations
 * name
 * address
 * opened (year)
-* books[] (book resource array, but in POST/PUT body books IDs are written here, book object is automatically added to array by specified ID)
+* books[] (book resource array, in POST/PUT body book IDs are written here, book object with that id is automatically added to the array)
 
 ### Book
 
@@ -47,9 +47,15 @@ Simple library web service that implements CRUD operations
 * http://localhost:80/libraries/1/books/2 - remove book(id 2) from library(id 1)
 
 
-## POST/PUT body structure (id will be ignored)
+## POST/PUT body structures
 
-### Library ("books" - books IDs array (cannot be empty in PUT command))
+
+### Library
+* library id will be ignored
+* "books" array cannot be empty in PUT commands
+
+#### POST/PUT
+
 ```json
 {
     "name": "library1",
@@ -59,7 +65,17 @@ Simple library web service that implements CRUD operations
 }
 ```
 
+#### PUT (http://localhost:80/libraries/1/books)
+```json
+{
+    "books": [1, 3]
+}
+```
+
 ### Book
+* book id will be ignored
+
+#### POST/PUT
 ```json
 {
     "author": "name1 surname1",
@@ -68,9 +84,4 @@ Simple library web service that implements CRUD operations
 }
 ```
 
-## PUT (update library "books" array) body structure (array in request body cannot be empty)
-```json
-{
-    "books": [1, 3]
-}
-```
+
